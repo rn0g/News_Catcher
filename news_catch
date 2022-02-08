@@ -1,0 +1,112 @@
+## BS4 War Catcher
+from pickletools import long1
+from turtle import title
+from bs4 import BeautifulSoup
+from urllib.request import Request
+from urllib.request import urlopen
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.firefox.options import Options
+import requests
+import time
+from os import system
+from datetime import datetime, date
+from win10toast import ToastNotifier
+from playsound import playsound
+
+
+def save_time(time_here):
+    get_minute = int(time_here)
+    time_to_delete = get_minute + 5
+    time_to_delete = str(time_to_delete)
+    return time_to_delete
+
+def notificate_user(amount_of_articles, them_titles):
+    toaster = ToastNotifier()
+    message = "FOUND "
+    message_2 = str(amount_of_articles)
+    message_total = message + message_2 + " NEW ARTICLE(S)\n"
+    message_list_1 = str(them_titles[0])
+    message_total = message_total + message_list_1[0:100] + "..."
+    playsound('D:\Scripts\Requests\\ring_ring.wav')
+    toaster.show_toast('NEWS CATCHER UPDATE', message_total, duration=15, icon_path="D:\Scripts\Requests\\newspaper-folded.ico")
+    
+
+
+options_ = webdriver.FirefoxOptions()
+options_.headless = True
+driver = webdriver.Firefox(options=options_)
+driver.get('http://www.bing.com')
+
+search_word = input("Search for news: ")
+
+driver.find_element_by_name('q').send_keys(search_word, Keys.ENTER)
+time.sleep(3)
+driver.find_element_by_xpath('//*[@id="b-scopeListItem-images"]').click()
+
+html = urlopen(driver.current_url)
+soup = BeautifulSoup(html)
+
+
+already_news = set()
+already_snippet = set() 
+
+
+
+while True:
+    
+    day_time = datetime.now()
+    time_ = day_time.strftime('%H:%M:%S')
+    titles = []
+    texts = []
+
+    print("\t\t\t\t\t\t\t","*"*20, 'TIME OF UPDATE ->', time_, "*"*20)
+    print()
+    for e in soup.findAll('a', {"class":"title"}):
+        if e.get_text() not in already_news:
+            titles.append(e.get_text())
+            already_news.add(e.get_text())
+            recent_news.add(e.get_text())
+        if e.get_text() in already_news:
+            pass
+
+    for p in soup.findAll('div', {"class":"snippet"}):
+
+        if p.get_text()[0:100] not in already_snippet:
+            texts.append(p.get_text()[0:100])
+            already_snippet.add(p.get_text()[0:100])
+
+        
+        if p.get_text()[0:75] in already_snippet:
+            pass
+        
+    for a,b in zip(titles, texts):
+        print("NEWS -> ", a)
+
+        print("SNIPPET -> ", b)
+        print("*"*20)
+    
+    print()
+
+    print('[INFORMATION]')
+
+    print(len(titles), 'NEW TITLES', len(texts), 'NEW SNIPPETS')
+    
+    if len(recent_news) < 1:
+        print("No new news")
+    
+    if len(titles) >= 1:
+        notificate_user(len(titles), titles)
+        
+        
+    time.sleep(10)
+    
+    titles.clear()
+    texts.clear()
+
+    driver.refresh()
+    time.sleep(5)
+    html = urlopen(driver.current_url)
+    soup = BeautifulSoup(html)
+
+    
